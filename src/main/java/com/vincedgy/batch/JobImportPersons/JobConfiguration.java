@@ -1,16 +1,17 @@
 package com.vincedgy.batch.JobImportPersons;
 
-import com.vincedgy.batch.JobExecutionNotificationListener;
 import com.vincedgy.batch.entity.Person;
 import com.vincedgy.batch.entity.PersonRedis;
 import com.vincedgy.batch.entity.PersonRepository;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.listener.JobExecutionListenerSupport;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.LineMapper;
@@ -22,12 +23,13 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.FieldSet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 @Configuration
 @EnableBatchProcessing
@@ -39,9 +41,12 @@ public class JobConfiguration {
     final private String filename;
     final private int chunk;
 
+    @Autowired
+    PersonRepository personRepository;
+
     JobConfiguration(final JobBuilderFactory jbf,
                      final StepBuilderFactory sbf,
-                     @Value("${application.jobImportPersons.filename:MOCK_DATA.csv}") final String filename,
+                     @Value("${application.jobImportPersons.filename:MOCK_DATA_TEST.csv}") final String filename,
                      @Value("${application.jobImportPersons.chunk:1000}") final int chunk) {
         this.jbf = jbf;
         this.sbf = sbf;
@@ -53,8 +58,7 @@ public class JobConfiguration {
     // READER
     //--------------------------------------------------
 
-    @Bean
-    public FlatFileItemReader<Person> reader() {
+    private FlatFileItemReader<Person> reader(String s) {
         return new FlatFileItemReaderBuilder<Person>()
                 .name("dataItemReader")
                 .resource(new ClassPathResource(filename))
@@ -67,8 +71,7 @@ public class JobConfiguration {
                 .build();
     }
 
-    @Bean
-    public LineMapper<Person> lineMapper() {
+    private LineMapper<Person> lineMapper() {
         final DefaultLineMapper<Person> lineMapper = new DefaultLineMapper<>();
         final DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
         final PersonFieldSetMapper fieldSetMapper = new PersonFieldSetMapper();
@@ -85,8 +88,7 @@ public class JobConfiguration {
     }
 
     @Component
-    static
-    class PersonFieldSetMapper implements FieldSetMapper<Person> {
+    static class PersonFieldSetMapper implements FieldSetMapper<Person> {
         @Override
         public Person mapFieldSet(FieldSet fieldSet) {
             final Person p = new Person();
@@ -100,20 +102,36 @@ public class JobConfiguration {
         }
     }
 
-    @Bean
-    public PersonProcessor processor() {
-        return new PersonProcessor();
+    @Component
+    static class JobListenerImportPersons extends JobExecutionListenerSupport {
+        final private PersonRepository repository;
+
+        JobListenerImportPersons(final PersonRepository repository) {
+            this.repository = repository;
+        }
+
+        @Override
+        public void afterJob(final JobExecution jobExecution) {
+            if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
+                log.info("!!! JOB FINISHED! Time to verify the results");
+                AtomicReference<Long> count = new AtomicReference<>(0L);
+                repository.findAll().forEach(personRedis -> count.getAndSet(count.get() + 1));
+                log.info("Found " + count.toString() + " person(s) in Redis database");
+            }
+        }
     }
+
 
     //--------------------------------------------------
     // STEPs
     //--------------------------------------------------
     @Bean
-    public Step step1(PersonRedisItemWriter<PersonRedis> writer) {
+    public Step step1(PersonRedisItemWriter<PersonRedis> writer, JobParameters jobParameters) {
+
         return sbf.get("1-InsertFromCSVFileToRedisDb")
                 .<Person, PersonRedis>chunk(chunk)
-                .reader(reader())
-                .processor(processor())
+                .reader(reader(jobParameters.getString("fileName")))
+                .processor(new PersonProcessor())
                 .writer(writer)
                 .faultTolerant()
                 .skipLimit(10)
@@ -139,13 +157,20 @@ public class JobConfiguration {
     //--------------------------------------------------
 
     @Bean
-    public Job importPersonJob(JobExecutionNotificationListener listener, Step step0, Step step1) {
+    public Job importPersonJob(JobListenerImportPersons listener, Step step0, Step step1, JobParameters jobParameters) {
         return jbf.get("importPersons")
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .start(step0)
                 .next(step1)
                 .build();
+    }
+
+    @Bean
+    JobParameters jobParameters() {
+        return new JobParametersBuilder()
+                .addString("fileName", filename, true)
+                .toJobParameters();
     }
 
 }
