@@ -1,4 +1,4 @@
-package com.vincedgy.batch;
+package com.vincedgy.batch.JobImportPersons;
 
 import com.vincedgy.batch.entity.Person;
 import com.vincedgy.batch.entity.PersonRedis;

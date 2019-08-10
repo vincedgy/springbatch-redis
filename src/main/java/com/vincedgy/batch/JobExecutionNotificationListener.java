@@ -11,10 +11,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @Log4j2
-class NotificationListener extends JobExecutionListenerSupport {
+public class JobExecutionNotificationListener extends JobExecutionListenerSupport {
     final private PersonRepository repository;
 
-    NotificationListener(final PersonRepository repository) {
+    JobExecutionNotificationListener(final PersonRepository repository) {
         this.repository = repository;
     }
 
