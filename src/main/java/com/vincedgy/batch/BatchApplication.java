@@ -32,10 +32,7 @@ public class BatchApplication {
         return new LettuceConnectionFactory();
     }
 
-    public static void main(String[] args) throws IOException {
-        System.setProperty("input", "file://" + (new File("MOCK_DATA.csv")).getAbsolutePath());
-        SpringApplication.run(BatchApplication.class, args);
-    }
+    public static void main(String[] args)  { SpringApplication.run(BatchApplication.class, args); }
 }
 
 
