@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,7 +32,8 @@ public class BatchApplication {
         return new LettuceConnectionFactory();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        System.setProperty("input", "file://" + (new File("MOCK_DATA.csv")).getAbsolutePath());
         SpringApplication.run(BatchApplication.class, args);
     }
 }
