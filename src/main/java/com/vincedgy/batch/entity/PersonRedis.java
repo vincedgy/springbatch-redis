@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 @RedisHash("Person")
 @Data

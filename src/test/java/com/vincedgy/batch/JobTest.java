@@ -1,6 +1,5 @@
 package com.vincedgy.batch;
 
-import com.vincedgy.batch.JobImportPersons.JobConfiguration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +21,7 @@ import javax.sql.DataSource;
 
 @RunWith(SpringRunner.class)
 @SpringBatchTest
-@ContextConfiguration(classes={JobConfiguration.class, BatchApplication.class})
+@ContextConfiguration(classes={BatchApplication.class})
 public class JobTest {
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -45,6 +44,7 @@ public class JobTest {
 
     @Test
     public void testJob() throws Exception {
+
         // given
         JobParameters jobParameters =
                 jobLauncherTestUtils.getUniqueJobParameters();
