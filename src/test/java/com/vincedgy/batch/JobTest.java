@@ -18,6 +18,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
+import java.io.File;
 
 @RunWith(SpringRunner.class)
 @SpringBatchTest
@@ -44,6 +45,8 @@ public class JobTest {
 
     @Test
     public void testJob() throws Exception {
+
+        System.setProperty("input", "MOCK_DATA_TEST.csv");
 
         // given
         JobParameters jobParameters =
