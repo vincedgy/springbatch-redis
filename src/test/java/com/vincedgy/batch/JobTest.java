@@ -46,8 +46,6 @@ public class JobTest {
     @Test
     public void testJob() throws Exception {
 
-        System.setProperty("input", "MOCK_DATA_TEST.csv");
-
         // given
         JobParameters jobParameters =
                 jobLauncherTestUtils.getUniqueJobParameters();

@@ -53,13 +53,13 @@ public class JobImportPersons {
 
     @Bean
     public ItemProcessor<Person, PersonRedis> processor() {
-        return person -> {
-            final PersonRedis returnedPerson = new PersonRedis();
-            returnedPerson.setId(UUID.randomUUID().toString());
-            returnedPerson.setExtId(person.getId().toString());
-            returnedPerson.setName(person.getLastName().toUpperCase() + " " + person.getFirstName());
-            returnedPerson.setGender(person.getGender().equals("Male") ? PersonRedis.Gender.MALE : PersonRedis.Gender.FEMALE);
-            return returnedPerson;
+        return p -> {
+            final PersonRedis pr = new PersonRedis();
+            pr.setId(UUID.randomUUID().toString());
+            pr.setExtId(p.getId().toString());
+            pr.setName(p.getLastName().toUpperCase() + " " + p.getFirstName());
+            pr.setGender(p.getGender().equals("Male") ? PersonRedis.Gender.MALE : PersonRedis.Gender.FEMALE);
+            return pr;
         };
     }
 
@@ -90,9 +90,9 @@ public class JobImportPersons {
                                final ItemWriter<? super PersonRedis> iw,
                                final JobExecutionListener jel,
                                final StepExecutionListener sel,
-                               final PersonRepository personRepository
+                               final PersonRepository personRepository,
+                               @Value("${CHUNK:100}") int chunk
     ) {
-
         /**
          * step0 : remove all data from Redis Collection
          */
@@ -111,12 +111,14 @@ public class JobImportPersons {
          * step1 : load all Persons from CSV file to Redis Collection
          */
         Step step1 = sbf.get("1-InsertFromCSVFileToRedisDb")
-                .<Person, PersonRedis>chunk(100)
+                .<Person, PersonRedis>chunk(chunk)
                 .reader(ir)
                 .processor(processor)
                 .writer(iw)
                 .listener(sel)
                 .build();
+
+        log.info("STARTING JOB with a CHUNK of " + chunk);
 
         return jbf.get("importPersons")
                 .incrementer(new RunIdIncrementer())
