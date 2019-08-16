@@ -1,17 +1,15 @@
 package com.vincedgy.batch.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 public class Person {
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String gender;
-    private String ipAddress;
+    Long id;
+    String firstName;
+    String lastName;
+    String email;
+    String gender;
+    String ipAddress;
 }

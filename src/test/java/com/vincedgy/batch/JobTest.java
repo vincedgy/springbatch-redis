@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.configuration.annotation.BatchConfigurer;
 import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
 import org.springframework.batch.test.JobLauncherTestUtils;
@@ -18,7 +19,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.sql.DataSource;
-import java.io.File;
 
 @RunWith(SpringRunner.class)
 @SpringBatchTest
@@ -47,12 +47,14 @@ public class JobTest {
     public void testJob() throws Exception {
 
         // given
-        JobParameters jobParameters =
-                jobLauncherTestUtils.getUniqueJobParameters();
+        JobParameters jobParameters = jobLauncherTestUtils.getUniqueJobParameters();
+        JobParametersBuilder jpb = new JobParametersBuilder();
+        jpb.addJobParameters(jobParameters)
+                .addString("input", "file:MOCK_DATA_TEST.csv");
 
         // when
         JobExecution jobExecution =
-                jobLauncherTestUtils.launchJob(jobParameters);
+                jobLauncherTestUtils.launchJob(jpb.toJobParameters());
 
         // then
         Assert.assertEquals(ExitStatus.COMPLETED,
