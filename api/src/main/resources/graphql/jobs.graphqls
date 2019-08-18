@@ -1,0 +1,29 @@
+type BatchJobExecutionParams {
+    keyName: String
+    stringVal: String
+    dateVal: String
+    longVal: String
+    doubleVal: String
+    identifying: String
+    typeCd: String
+}
+
+type BatchJobExecution {
+    id: ID!
+    version: Int
+    status: String
+    createTime :String
+    startTime :String
+    endTime :String
+    exitCode :String
+    exitMessage :String
+    lastUpdated :String
+    jobConfigurationLocation :String
+    params: [BatchJobExecutionParams]!
+}
+
+type Query {
+    findAllJobs: [BatchJobExecution]!
+    countJobs: Int!
+}
+

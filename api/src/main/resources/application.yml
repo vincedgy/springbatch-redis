@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    platform: POSTGRESQL
+    url: jdbc:postgresql://localhost:5432/batchdb
+    driverClassName: org.postgresql.Driver
+    username: batchdb
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  jpa.open-in-view: false
+
+graphql:
+  servlet:
+    mapping: /graphql
+    enabled: true
+    corsEnabled: true
+    exception-handlers-enabled: true
+
+graphiql:
+  mapping: /graphiql
+  cdn:
+    enabled: false
+  props:
+    variables:
+      editorTheme: "solarized light"
+
+management:
+  endpoints:
+    enabled-by-default: true
